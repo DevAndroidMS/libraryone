@@ -1,0 +1,2 @@
+include ':app', ':libraryone'
+rootProject.name='My Application'
