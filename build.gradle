@@ -8,7 +8,9 @@ buildscript {
     }
     dependencies {
         classpath 'com.android.tools.build:gradle:3.5.0'
-        
+        classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.8.4'
+        classpath 'com.github.dcendents:android-maven-gradle-plugin:2.1'
+        classpath 'com.novoda:bintray-release:0.8.0'
         // NOTE: Do not place your application dependencies here; they belong
         // in the individual module build.gradle files
     }
@@ -25,3 +27,67 @@ allprojects {
 task clean(type: Delete) {
     delete rootProject.buildDir
 }
+
+configurations {
+    customConfig.extendsFrom implementation
+}
+
+
+apply plugin: 'maven-publish'
+apply plugin: 'com.jfrog.bintray'
+
+version '1.0' // your library version
+group 'com.priti61' // whatever group name you'd like
+
+publishing {
+    publications {
+        Production(MavenPublication) {
+            //E:/Project/ModuleDemo/libraryone/build/outputs/aar
+            //'E:\Project\ModuleDemo\build\outputs\aar\libraryone-release.aar'
+
+            artifact("E:/Project/ModuleDemo/libraryone/build/outputs/aar/libraryone-release.aar") // replace with your library name
+            groupId this.group
+            artifactId 'libraryone' // replace with your library artifact id
+            version this.version
+
+            pom.withXml {
+                def dependenciesNode = asNode().appendNode('dependencies')
+
+                // Iterate over the implementation dependencies (we don't want the test ones),
+                // adding a <dependency> node for each
+                configurations.implementation.allDependencies.each {
+                    // Ensure dependencies such as fileTree are not included in the pom.
+                    if (it.name != 'unspecified') {
+                        def dependencyNode = dependenciesNode.appendNode('dependency')
+                        dependencyNode.appendNode('groupId', it.group)
+                        dependencyNode.appendNode('artifactId', it.name)
+                        dependencyNode.appendNode('version', it.version)
+                    }
+                }
+            }
+        }
+    }
+}
+
+bintray {
+    user ='androidteam287'
+    key ='ef811c4439db357651497a9ab6a3ec143e354691'
+    publications = ['Production']
+    configurations = ['archives']
+    // Default: false. Whether to run this as dry-run, without deploying
+    dryRun = false
+    // Default: false. Whether to override version artifacts already published
+    override = false
+    // Default: false. Whether version should be auto published after an upload
+    publish = true
+    pkg {
+        repo = 'libraryone' // the name of the repository you created on Bintray
+        name = 'libraryone' // the name of the package you created inside it
+        version {
+            name = this.version
+            released = new Date()
+            vcsTag = this.version
+        }
+    }
+}
+
